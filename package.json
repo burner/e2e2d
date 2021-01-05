@@ -10,14 +10,7 @@
 	"scripts": {
 		"build": "npm-run-all build:clean build:compile",
 		"build:clean": "rm -rf dist",
-		"build:compile": "tsc",
-		"lint": "npm-run-all lint:core lint:test",
-		"lint:core": "tslint src/**/*.ts",
-		"lint:test": "tslint tests/**/*.ts",
-		"test": "npm-run-all lint test:prepare test:execute",
-		"test:prepare": "npm run build",
-		"test:execute": "mocha dist/tests --recursive",
-		"prepublish": "npm run test"
+		"build:compile": "tsc"
 	},
 	"keywords": [
 		"playwright",
@@ -30,17 +23,10 @@
 	"author": "Robert Schadek",
 	"license": "MIT",
 	"dependencies": {
-		"commander": "^6.2.1",
 		"playwright": "^1.7.1"
 	},
 	"devDependencies": {
-		"@types/chai": "^4.2.12",
-		"@types/mocha": "^8.0.1",
-		"chai": "^4.2.0",
-		"mocha": "^8.1.1",
 		"npm-run-all": "^4.1.5",
-		"ts-lint": "^4.5.1",
-		"ts-node": "^8.10.2",
 		"typescript": "^3.9.7"
 	}
 }
