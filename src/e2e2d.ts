@@ -6,31 +6,18 @@ class LazyArg {
 	constructor(public propName: string, public shortName: string = "", public doc: string = "") {}
 }
 
-class LazyArgs {
-	options: any
-	constructor() {
-		this.options = {};
-	}
-}
-
 function getLazyArg(target: Object, propertyKey: string): LazyArg {
-	let lazyArgs: LazyArgs;
-	let proto = Object.getPrototypeOf(target);
-	if(proto.hasOwnProperty(OptionMetaDataStore)) {
-		lazyArgs = <LazyArgs>(<any>proto)[OptionMetaDataStore];
-	} else {
-		lazyArgs = new LazyArgs();
-		(<any>proto)[OptionMetaDataStore] = lazyArgs;
+	let pro: Object = Object.prototype;
+	if(!pro.hasOwnProperty(OptionMetaDataStore)) {
+		(pro as any)[OptionMetaDataStore] = {};
 	}
 
-	if(lazyArgs.options.hasOwnProperty(propertyKey)) {
-		return <LazyArg>lazyArgs.options[propertyKey]
+	if(!(pro as any)[OptionMetaDataStore].hasOwnProperty(propertyKey)) {
+		(pro as any)[OptionMetaDataStore][propertyKey] =
+			new LazyArg(propertyKey);
 	}
-	const n = new LazyArg(propertyKey);
 
-	lazyArgs.options[propertyKey] = n;
-
-	return <LazyArg>lazyArgs.options[propertyKey];
+	return (pro as any)[OptionMetaDataStore][propertyKey];
 }
 
 const OptionShort = (shortName: string) => (target: Object, propertyKey: string) => {
@@ -54,7 +41,6 @@ function getShortName<T extends Object>(obj: T, propName: string): string {
 
 function buildDocString<T extends Object>(obj: T, propName: string): string {
 	const lazyArg: LazyArg = getLazyArg(obj, propName);
-	console.log({o: JSON.stringify(Object.getPrototypeOf(obj)), n: propName, l: JSON.stringify(lazyArg)});
 	const prefix = `Type: ${typeof (<any>obj)[propName]}, Default: ${(<any>obj)[propName]}`;
 	return lazyArg.doc == ""
 		? prefix
@@ -132,9 +118,12 @@ function fillUpConfig<T extends Object>(resultObject: T, nesting: string[]) {
 			const lName = `--${[...nesting, key].join(".")}`;
 			const lIdx = process.argv.indexOf(lName);
 			const sName = getShortName(resultObject, key);
-			const sIdx = sName !== "" ? process.argv.indexOf(lName) : -1
+			const sIdx = sName !== "" ? process.argv.indexOf(sName) : -1
 
 			const elem = new Elem(lName, lIdx, sName, sIdx);
+			if(elem.isEmpty()) {
+				continue;
+			}
 
 			if(typeof thing  === "boolean" && elem.nextIsBoolean()) {
 				(<any>resultObject)[key] = elem.getNextBoolean();
@@ -154,14 +143,13 @@ function fillUpConfig<T extends Object>(resultObject: T, nesting: string[]) {
 }
 
 function printHelp<T extends Object>(options: T, nesting: string[]) {
-	console.log(nesting.join(".") + " " + JSON.stringify(options));
 	for(const key of Object.getOwnPropertyNames(options)) {
 		let thing = (<any>options)[key];
 		if(typeof thing === "object") {
 			printHelp(thing, [...nesting, key]);
 		} else {
 			const sn = getShortName(options, key);
-			console.log("\t" + `--${[...nesting, key].join(".")}`
+			console.log("\t" + `${sn != "" ? "-" + sn + " " : ""}--${[...nesting, key].join(".")}`
 				+ ` ${buildDocString(options, key)}`);
 		}
 	}
@@ -172,16 +160,16 @@ function parseCMDargs<T extends Object>(options: T): T {
 	return options;
 }
 
-function parseCMD<T extends Object>(options: T): T {
+function parseCMD<T extends Object>(options: T, header: string): T {
 	if(process.argv.indexOf("--help") !== - 1
 			|| process.argv.indexOf("-h") !== -1)
 	{
+		console.log(header);
 		printHelp(options, []);
 		process.exit(0);
 	} else {
 		return parseCMDargs(options);
 	}
-	return options;
 }
 
 export async function identity(input: any): Promise<any> {
@@ -309,6 +297,7 @@ export class Should {
 		if(v === null || v === undefined) {
 			throw new E2E2DShouldError("Exist", this);
 		}
+		v.setAttribute('style', 'background-color=red;');
 		this.U.printMsg(buildConsoleText(true, this.msg))
 		return this;
 	}
@@ -316,27 +305,32 @@ export class Should {
 
 function parseArgs(): E2E2DConfig {
 	let options = new E2E2DConfig();
-	console.log(options);
-	return parseCMD(options);
+	return parseCMD(options, "End to End to Documentation");
 }
 
 export class E2E2DConfigPlaywrigth {
 	headless: boolean = false;
+	@OptionShort("s")
 	slowMo: number = 300;
 	screenX: number = 1920;
 	screenY: number = 1080;
+	devTools: boolean = false;
 }
 
+const outputFolderDefault = "e2e2documentation"
+
 export class E2E2DConfig {
-	@OptionDoc("The output folder for the documentation")
-	outputFolder: string = "e2e2documentation";
+	@OptionDoc("\n\t\tThe output folder for the documentation.")
+	@OptionShort("o")
+	outputFolder: string = outputFolderDefault;
 	pw: E2E2DConfigPlaywrigth = new E2E2DConfigPlaywrigth();
 }
 
 export class E2E2D {
-	conf: E2E2DConfig;
-	constructor(public browser: Browser, public page: Page) {
-		this.conf = parseArgs();
+	constructor(public name: string, public desc: string
+			, public conf: E2E2DConfig
+			, public browser: Browser, public page: Page)
+	{
 	}
 
 	printMsg(msg: string) {
@@ -370,11 +364,30 @@ export class E2E2D {
 
 	async leftClick(selector: string) {
 		try {
+			await this.highlight(selector);
 			await this.page.click(selector);
+			await this.deHighlight();
 		} catch(e) {
 			this.handleError(e, "leftClick", `on '${selector}'`)
 		}
 		this.printMsg(`${greenTick}You left click ${selector}`);
+	}
+
+	followStepsIn(name: string) {
+	}
+
+	async highlight(sel: string) {
+		await this.page.evaluate(
+`if(typeof Domlight === "function") {
+	Domlight(document.querySelector('${sel}'));
+}`);
+	}
+
+	async deHighlight() {
+		await this.page.evaluate(
+`if(typeof Domlight === "function") {
+	Domlight.hideAll();
+}`);
 	}
 
 	get should() {
@@ -382,27 +395,43 @@ export class E2E2D {
 	}
 }
 
-async function impl(desc: string): Promise<E2E2D> {
-	const browser = await chromium.launch({ headless: false, slowMo: 300});
+async function impl(name: string, desc: string): Promise<E2E2D> {
+	const conf = parseArgs();
+	const browser = await chromium.launch(
+		{ headless: conf.pw.headless
+		, slowMo: conf.pw.slowMo
+		, devtools: conf.pw.devTools
+		});
 	const page = await browser.newPage();
-	let ret = new E2E2D(browser, page);
+	let ret = new E2E2D(name, desc, conf, browser, page);
 	return ret;
 }
 
-export async function InOrderTo(desc: string, ...chain: any[]): Promise<any> {
-	const data: E2E2D = await impl(desc);
+export class PreCondition {
+	constructor(public name: string, public fun: any) {}
+}
+
+export function preCondition(name: string, fun: any) {
+	return new PreCondition(name, fun);
+}
+
+export async function InOrderTo(name: string, desc: string
+		, ...chain: any[]): Promise<any>
+{
+	const data: E2E2D = await impl(name, desc);
 	let chained: E2E2D = data;
 
-	console.log("\t"+ desc + ":");
+	console.log("\tName: "+ name + "\n\tDesc: " + desc);
 
 	for(const f of chain) {
 		try {
-			chained = await f(chained);
+			if(f.constructor.name == "AsyncFunction") {
+				chained = await f(chained);
+			} else {
+				chained.followStepsIn(f.name);
+				chained = await f.fun(chained);
+			}
 		} catch(e) {
-			/*console.log({v: e, ce: e instanceof E2E2DCompareError
-				, se: e instanceof E2E2DShouldError
-				, e: e instanceof Error});
-			*/
 			if(e instanceof E2E2DCompareError) {
 				console.log(buildConsoleText(false,
 					[ ...e.shld.msg, "|"
@@ -422,4 +451,3 @@ export async function InOrderTo(desc: string, ...chain: any[]): Promise<any> {
 	data.browser.close();
 	return data;
 }
-
