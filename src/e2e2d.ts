@@ -9,7 +9,7 @@ class LazyArg {
 }
 
 function getLazyArg(target: Object, propertyKey: string): LazyArg {
-	let pro: Object = Object.prototype;
+	let pro: Object = Object.getPrototypeOf(target);
 	if(!pro.hasOwnProperty(OptionMetaDataStore)) {
 		(pro as any)[OptionMetaDataStore] = {};
 	}
@@ -416,6 +416,12 @@ export class E2E2D {
 		return `${this.genPrefix()}${this.cnt}_${action}_${part}.png`;
 	}
 
+	async comment(doc: string) {
+		const step = new Step("comment", "", doc);
+		this.recording.addStep(step);
+		++this.cnt;
+	}
+
 	async navTo(url: string, doc: string = "") {
 		const step = new Step("navTo", "", doc);
 		step.beforeScreenshot = await this.takeScreenshot(
@@ -533,7 +539,8 @@ async function impl(name: string, desc: string): Promise<E2E2D> {
 }
 
 export class PreCondition {
-	constructor(public name: string, public fun: any) {}
+	constructor(public name: string, public fun: any
+		, public recordSteps: boolean = false) {}
 }
 
 export function preCondition(name: string, fun: any) {
@@ -554,9 +561,13 @@ export async function InOrderTo(name: string, desc: string
 				chained = await f(chained);
 			} else {
 				chained.followStepsIn(f.name);
-				chained.stopRecording();
+				if(!f.recordSteps) {
+					chained.stopRecording();
+				}
 				chained = await f.fun(chained);
-				chained.startRecording();
+				if(!f.recordSteps) {
+					chained.startRecording();
+				}
 			}
 		} catch(e) {
 			if(e instanceof E2E2DCompareError) {
