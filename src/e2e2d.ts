@@ -315,7 +315,7 @@ export class E2E2D {
 
 	async takeScreenshot(fn: string): Promise<string> {
 		const prefix = this.genPrefix();
-		if(this.recording.recodingIsOn) {
+		if(this.recording.recodingIsOn && this.conf.generateDoc) {
 			await this.page.screenshot({path: fn});
 		}
 		return fn.slice(prefix.length);
@@ -416,7 +416,9 @@ export async function InOrderTo(name: string, desc: string
 		}
 	}
 	data.browser.close();
-	await fs.writeFile(outputFolderName(chained.conf.outputFolder, name)
+	if(data.conf.generateDoc) {
+		await fs.writeFile(outputFolderName(chained.conf.outputFolder, name)
 			+ "e2e2d.json", JSON.stringify(chained.recording, null, 2) + "\n");
+	}
 	return data;
 }
