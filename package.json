@@ -1,6 +1,6 @@
 {
 	"name": "e2e2d",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "",
 	"main": "dist/e2e2d.js",
 	"types": "dist/e2e2d.d.ts",
@@ -23,7 +23,7 @@
 	"author": "Robert Schadek",
 	"license": "MIT",
 	"dependencies": {
-		"lazyargs": "^1.0.1",
+		"lazyargs": "^2.0.0",
 		"playwright": "^1.7.1"
 	},
 	"devDependencies": {

@@ -1,7 +1,7 @@
 import {Browser, chromium, Page, ElementHandle} from "playwright";
 import * as path from "path"
 import { promises as fs } from "fs";
-import { OptionDoc, OptionShort, parseCMD } from "lazyargs";
+import { Elem, OptionCallback, OptionDoc, OptionShort, parseCMD, buildElem } from "lazyargs";
 
 export async function identity(input: any): Promise<any> {
 	return input;
@@ -50,7 +50,6 @@ const redCross = "\t\t\x1b[31m⨯\x1b[0m ";
 const cross = "\t\t⨯ ";
 
 function buildConsoleText(worked: boolean, color: boolean, rest: string[]) {
-
 	let ret = worked
 		? color ? greenTick : tick
 		: color ? redCross : cross;
@@ -173,6 +172,16 @@ export class E2E2DConfigPlaywrigth {
 
 const outputFolderDefault = "e2e2documentation"
 
+function overWriteConfData(nesting: string[], key: string, options: any): void {
+	const elem: Elem = buildElem(nesting, key, options);
+	if(!elem.isEmpty()) {
+		const s: string[] = elem.getNextString().split(":")
+			.map((i: string) => i.trim());
+
+		options.configFileData[s[0]] = s[1];
+	}
+}
+
 export class E2E2DConfig {
 	pw: E2E2DConfigPlaywrigth = new E2E2DConfigPlaywrigth();
 	@OptionDoc("\n\t\tThe output folder for the documentation.")
@@ -185,6 +194,11 @@ export class E2E2DConfig {
 	silentUnlessError: boolean = false;
 
 	color: boolean = true;
+	configDataFilename: string = "";
+
+	@OptionShort("c")
+	@OptionCallback(overWriteConfData)
+	configFileData: ConfigFileData = {};
 }
 
 function outputFolderName(outDir: string, testName: string) {
@@ -217,6 +231,8 @@ export class Recording {
 		}
 	}
 }
+
+export type ConfigFileData = { [key: string]: any };
 
 export class E2E2D {
 	cnt: number = 0;
@@ -379,6 +395,11 @@ async function impl(name: string, desc: string): Promise<E2E2D> {
 
 	const page = await browser.newPage();
 	let ret = new E2E2D(name, desc, conf, browser, page);
+	if(conf.configDataFilename) {
+		ret.conf.configFileData = JSON.parse(
+			await fs.readFile(conf.configDataFilename, "utf8")
+		);
+	}
 
 	return ret;
 }
