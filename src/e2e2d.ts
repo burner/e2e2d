@@ -45,10 +45,15 @@ export class E2E2DCompareError extends E2E2DShouldError {
 }
 
 const greenTick = "\t\t\x1b[32m✓\x1b[0m ";
+const tick = "\t\t✓ ";
 const redCross = "\t\t\x1b[31m⨯\x1b[0m ";
+const cross = "\t\t⨯ ";
 
-function buildConsoleText(worked: boolean, rest: string[]) {
-	let ret = worked ? greenTick : redCross;
+function buildConsoleText(worked: boolean, color: boolean, rest: string[]) {
+
+	let ret = worked
+		? color ? greenTick : tick
+		: color ? redCross : cross;
 	return ret + rest.join(" ");
 }
 
@@ -100,7 +105,7 @@ export class Should {
 			throw new E2E2DCompareError("Equals " + v + " " + toCmpAgainst, this
 				, v, toCmpAgainst);
 		}
-		this.U.printMsg(buildConsoleText(true, this.msg))
+		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
 		await this.saveStep();
 		return this;
 	}
@@ -116,7 +121,7 @@ export class Should {
 			throw new E2E2DCompareError("Equal " + v + " " + toCmpAgainst, this
 				, v, toCmpAgainst);
 		}
-		this.U.printMsg(buildConsoleText(true, this.msg))
+		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
 		await this.saveStep();
 		return this;
 	}
@@ -135,7 +140,7 @@ export class Should {
 			throw new E2E2DShouldError("Exist", this);
 		}
 		v.setAttribute('style', 'background-color=red;');
-		this.U.printMsg(buildConsoleText(true, this.msg))
+		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
 		await this.saveStep();
 		return this;
 	}
@@ -174,6 +179,12 @@ export class E2E2DConfig {
 	@OptionShort("o")
 	outputFolder: string = outputFolderDefault;
 	generateDoc: boolean = true;
+
+	@OptionDoc("When true no message will be printed unless there is an error."
+		+ " Then all so far emitted messages will be printed")
+	silentUnlessError: boolean = false;
+
+	color: boolean = true;
 }
 
 function outputFolderName(outDir: string, testName: string) {
@@ -209,6 +220,7 @@ export class Recording {
 
 export class E2E2D {
 	cnt: number = 0;
+	deferedOutput: string[] = [];
 	constructor(public name: string, public desc: string
 			, public conf: E2E2DConfig
 			, public browser: Browser, public page: Page
@@ -227,7 +239,11 @@ export class E2E2D {
 	}
 
 	printMsg(msg: string) {
-		console.log(msg);
+		if(this.conf.silentUnlessError) {
+			this.deferedOutput.push(msg);
+		} else {
+			console.log(msg);
+		}
 	}
 
 	handleError(e: Error, fun: string, msg: string = "") {
@@ -260,7 +276,7 @@ export class E2E2D {
 		} catch(e) {
 			this.handleError(e, "navTo", `'${url}'`);
 		}
-		this.printMsg(`${greenTick}You navigate to ${url}`);
+		this.printMsg(`${this.conf.color ? greenTick : tick}You navigate to ${url}`);
 		this.recording.addStep(step);
 		++this.cnt;
 	}
@@ -281,7 +297,7 @@ export class E2E2D {
 		} catch(e) {
 			this.handleError(e, "insert", `'${selector}' with '${value}'`);
 		}
-		this.printMsg(`${greenTick}You insert ${value} into ${selector}`);
+		this.printMsg(`${this.conf.color ? greenTick : tick}You insert '${value}' into ${selector}`);
 		this.recording.addStep(step);
 		++this.cnt;
 	}
@@ -303,7 +319,7 @@ export class E2E2D {
 		} catch(e) {
 			this.handleError(e, "leftClick", `on '${selector}'`)
 		}
-		this.printMsg(`${greenTick}You left click ${selector}`);
+		this.printMsg(`${this.conf.color ? greenTick : tick}You left click ${selector}`);
 		this.recording.addStep(step);
 		++this.cnt;
 	}
@@ -382,7 +398,7 @@ export async function InOrderTo(name: string, desc: string
 	const data: E2E2D = await impl(name, desc);
 	let chained: E2E2D = data;
 
-	console.log("\tName: "+ name + "\n\tDesc: " + desc);
+	data.printMsg("\tName: "+ name + "\n\tDesc: " + desc)
 
 	for(const f of chain) {
 		try {
@@ -399,20 +415,26 @@ export async function InOrderTo(name: string, desc: string
 				}
 			}
 		} catch(e) {
+			if(data.conf.silentUnlessError && data.deferedOutput.length > 0) {
+				for(const line of data.deferedOutput) {
+					console.log(line);
+				}
+			}
 			if(e instanceof E2E2DCompareError) {
-				console.log(buildConsoleText(false,
+				console.log(buildConsoleText(false, data.conf.color,
 					[ ...e.shld.msg, "|"
 					,`Got: '${e.got}'`
 					, `Expected: '${e.expected}'`
 					]));
 			} else if(e instanceof E2E2DShouldError) {
-				console.log(buildConsoleText(false, e.shld.msg));
+				console.log(buildConsoleText(false, data.conf.color
+					, e.shld.msg));
 			} else if(e instanceof Error) {
-				console.log("Error:" + e + e.stack);
+				console.log("Error: " + e + e.stack);
 			} else {
 				console.log("Error Rest: " + e);
 			}
-			break;
+			process.exit(1);
 		}
 	}
 	data.browser.close();
