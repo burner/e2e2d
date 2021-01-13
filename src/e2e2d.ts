@@ -101,6 +101,11 @@ export class Should {
 
 		this.msg.push(`'${toCmpAgainst}'`);
 		if(v !== toCmpAgainst) {
+			await this.saveStepError(
+				{ failed: "equals"
+				, got: v
+				, expected: toCmpAgainst
+				});
 			throw new E2E2DCompareError("Equals " + v + " " + toCmpAgainst, this
 				, v, toCmpAgainst);
 		}
@@ -117,6 +122,11 @@ export class Should {
 
 		this.msg.push(`'${toCmpAgainst}'`);
 		if(v !== toCmpAgainst) {
+			await this.saveStepError(
+				{ failed: "equal"
+				, got: v
+				, expected: toCmpAgainst
+				});
 			throw new E2E2DCompareError("Equal " + v + " " + toCmpAgainst, this
 				, v, toCmpAgainst);
 		}
@@ -136,12 +146,24 @@ export class Should {
 			? await this.el
 			: this.el;
 		if(v === null || v === undefined) {
+			await this.saveStepError({ failed: "exist" });
 			throw new E2E2DShouldError("Exist", this);
 		}
 		v.setAttribute('style', 'background-color=red;');
 		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
 		await this.saveStep();
 		return this;
+	}
+
+	async saveStepError(additionalData: any = null) {
+		const step = new Step("should", this.selector, this.msg.join(" "));
+		const stepAD = { ...step, ...additionalData };
+		if(this.shouldTakeScreenshot) {
+			stepAD.beforeScreenshot = await this.U.takeScreenshot(
+				this.U.genFileName(this.msg.join("_"), "error"));
+		}
+		console.log(stepAD);
+		this.U.recording.addStep(stepAD);
 	}
 
 	async saveStep() {
@@ -456,6 +478,10 @@ export async function InOrderTo(name: string, desc: string
 				console.log("Error: " + e + e.stack);
 			} else {
 				console.log("Error Rest: " + e);
+			}
+			if(data.conf.generateDoc) {
+				await fs.writeFile(outputFolderName(chained.conf.outputFolder, name)
+					+ "e2e2d.json", JSON.stringify(chained.recording, null, 2) + "\n");
 			}
 			process.exit(1);
 		}
