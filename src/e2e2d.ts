@@ -409,8 +409,10 @@ export class PreCondition {
 		, public recordSteps: boolean = false) {}
 }
 
-export function preCondition(name: string, fun: any) {
-	return new PreCondition(name, fun);
+export function preCondition(name: string, fun: any
+		, recordSteps: boolean = false)
+{
+	return new PreCondition(name, fun, recordSteps);
 }
 
 export async function InOrderTo(name: string, desc: string

@@ -1,6 +1,6 @@
 {
 	"name": "e2e2d",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "",
 	"main": "dist/e2e2d.js",
 	"types": "dist/e2e2d.d.ts",
