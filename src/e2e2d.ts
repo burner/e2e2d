@@ -1,7 +1,7 @@
 import {Browser, chromium, Page, ElementHandle} from "playwright";
 import * as path from "path"
 import { promises as fs } from "fs";
-import { Elem, OptionCallback, OptionDoc, OptionShort, parseCMD, buildElem } from "lazyargs";
+import { Elem, OptionCallback, OptionDoc, OptionShort, parseCMD, buildElem, enforce } from "lazyargs";
 
 export async function identity(input: any): Promise<any> {
 	return input;
@@ -56,6 +56,97 @@ function buildConsoleText(worked: boolean, color: boolean, rest: string[]) {
 	return ret + rest.join(" ");
 }
 
+type ShouldFun = (sh: Should) => Promise<Should>;
+
+export async function observe(sh: Should): Promise<Should> {
+	sh.msg.push("observe");
+	return sh;
+}
+
+export function that(thing: any): any {
+	return async function(sh: Should): Promise<Should> {
+		sh.msg.push("that");
+		sh.el = thing;
+		return sh;
+	}
+}
+
+export async function is(sh: Should): Promise<Should> {
+	sh.msg.push("is");
+	return sh;
+}
+
+export function see(selector: string = "", docName: string = ""): any {
+	return async function(sh: Should): Promise<Should> {
+		sh.selector = selector;
+		sh.msg.push("see");
+		sh.msg.push(docName !== "" ? docName : selector);
+		sh.el = await sh.U.page.$(selector);
+		return sh;
+	}
+}
+
+export function equals(toCmpAgainst: any, transform: (input: any) => any = identity): any {
+	return async function(sh: Should): Promise<Should> {
+		const v = await transform(await sh.el);
+
+		sh.msg.push(`'${toCmpAgainst}'`);
+		if(v !== toCmpAgainst) {
+			await sh.saveStepError(
+				{ failed: "equals"
+				, got: v
+				, expected: toCmpAgainst
+				});
+			await sh.U.deHighlight(sh.selector, sh.shouldTakeScreenshot);
+			throw new E2E2DCompareError("Equals " + v + " " + toCmpAgainst, sh
+				, v, toCmpAgainst);
+		}
+		sh.U.printMsg(buildConsoleText(true, sh.U.conf.color, sh.msg))
+		await sh.saveStep();
+		return sh;
+	}
+}
+
+export function equal(toCmpAgainst: any, transform: (input: any) => any = identity): any {
+	return async function(sh: Should): Promise<Should> {
+		const v = await transform(await sh.el);
+
+		sh.msg.push(`'${toCmpAgainst}'`);
+		if(v !== toCmpAgainst) {
+			await sh.saveStepError(
+				{ failed: "equal"
+				, got: v
+				, expected: toCmpAgainst
+				});
+			await sh.U.deHighlight(sh.selector, sh.shouldTakeScreenshot);
+			throw new E2E2DCompareError("Equal " + v + " " + toCmpAgainst, sh
+				, v, toCmpAgainst);
+		}
+		sh.U.printMsg(buildConsoleText(true, sh.U.conf.color, sh.msg))
+		await sh.saveStep();
+		return sh;
+	}
+}
+
+export async function to(sh: Should): Promise<Should> {
+	sh.msg.push("to");
+	return sh;
+}
+
+export async function exist(sh: Should): Promise<Should> {
+	const v = Promise.resolve(sh.el) == sh.el
+		? await sh.el
+		: sh.el;
+
+	if(v === null || v === undefined) {
+		await sh.saveStepError({ failed: "exist" });
+		throw new E2E2DShouldError("Exist", sh);
+	}
+	sh.U.printMsg(buildConsoleText(true, sh.U.conf.color, sh.msg))
+	await sh.saveStep();
+	return sh;
+}
+
 export class Should {
 	el: any;
 	msg: string[];
@@ -63,96 +154,6 @@ export class Should {
 
 	constructor(public U: E2E2D, public shouldTakeScreenshot: boolean = true) {
 		this.msg = ["You"];
-	}
-
-	see(selector: string = "", docName: string = "") {
-		this.selector = selector;
-		this.msg.push("see");
-		this.msg.push(docName !== "" ? docName : selector);
-		try {
-			this.el = this.U.page.$(selector);
-		} catch(e) {
-			console.log(e);
-		}
-		return this;
-	}
-
-	get observe(): Should {
-		this.msg.push("observe");
-		return this;
-	}
-
-	that(thing: any): Should {
-		this.msg.push("that");
-		this.el = thing;
-		return this;
-	}
-
-	get is(): Should {
-		this.msg.push("is");
-		return this;
-	}
-
-	async equals(toCmpAgainst: any, transform: (input: any) => any = identity): Promise<Should> {
-		this.msg.push("equals");
-		const v = Promise.resolve(this.el) == this.el
-			? await transform(await this.el)
-			: await transform(this.el);
-
-		this.msg.push(`'${toCmpAgainst}'`);
-		if(v !== toCmpAgainst) {
-			await this.saveStepError(
-				{ failed: "equals"
-				, got: v
-				, expected: toCmpAgainst
-				});
-			throw new E2E2DCompareError("Equals " + v + " " + toCmpAgainst, this
-				, v, toCmpAgainst);
-		}
-		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
-		await this.saveStep();
-		return this;
-	}
-
-	async equal(toCmpAgainst: any, transform: (input: any) => any = identity): Promise<Should> {
-		this.msg.push("equal");
-		const v = Promise.resolve(this.el) == this.el
-			? await transform(await this.el)
-			: await transform(this.el);
-
-		this.msg.push(`'${toCmpAgainst}'`);
-		if(v !== toCmpAgainst) {
-			await this.saveStepError(
-				{ failed: "equal"
-				, got: v
-				, expected: toCmpAgainst
-				});
-			throw new E2E2DCompareError("Equal " + v + " " + toCmpAgainst, this
-				, v, toCmpAgainst);
-		}
-		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
-		await this.saveStep();
-		return this;
-	}
-
-	get to(): Should {
-		this.msg.push("to");
-		return this;
-	}
-
-	async exist(): Promise<Should> {
-		this.msg.push("exist");
-		const v = Promise.resolve(this.el) == this.el
-			? await this.el
-			: this.el;
-		if(v === null || v === undefined) {
-			await this.saveStepError({ failed: "exist" });
-			throw new E2E2DShouldError("Exist", this);
-		}
-		v.setAttribute('style', 'background-color=red;');
-		this.U.printMsg(buildConsoleText(true, this.U.conf.color, this.msg))
-		await this.saveStep();
-		return this;
 	}
 
 	async saveStepError(additionalData: any = null) {
@@ -166,15 +167,16 @@ export class Should {
 		this.U.recording.addStep(stepAD);
 	}
 
-	async saveStep() {
+	async saveStep(): Promise<any> {
 		const step = new Step("should", this.selector, this.msg.join(" "));
 		if(this.shouldTakeScreenshot && this.selector !== "") {
-			await this.U.highlight(this.selector);
+			await this.U.highlight(this.selector, this.shouldTakeScreenshot);
 			step.afterHighlightScreenshot = await this.U.takeScreenshot(
 				this.U.genFileName(this.msg.join("_"), "highlight"));
-			await this.U.deHighlight();
+			await this.U.deHighlight(this.selector, this.shouldTakeScreenshot);
 		}
 		this.U.recording.addStep(step);
+		return null;
 	}
 }
 
@@ -325,13 +327,13 @@ export class E2E2D {
 		try {
 			step.beforeScreenshot = await this.takeScreenshot(
 				this.genFileName("insert", "before"));
-			await this.highlight(selector);
+			await this.highlight(selector, true);
 			step.afterHighlightScreenshot = await this.takeScreenshot(
 				this.genFileName("insert", "highlight"));
 			await this.page.fill(selector, value);
 			step.afterScreenshot = await this.takeScreenshot(
 				this.genFileName("insert", "after"));
-			await this.deHighlight();
+			await this.deHighlight(selector, true);
 		} catch(e) {
 			this.handleError(e, "insert", `'${selector}' with '${value}'`);
 		}
@@ -340,21 +342,25 @@ export class E2E2D {
 		++this.cnt;
 	}
 
-	async leftClick(selector: string, doc: string = "") {
+	async leftClick(selector: string, doc: string = ""
+			, afterClickScreenshot: boolean = true)
+	{
 		const step = new Step("leftClick", selector, doc);
 		step.beforeScreenshot = await this.takeScreenshot(
 			this.genFileName("leftClick", "before"));
-		await this.highlight(selector);
+		await this.highlight(selector, true);
 		step.afterHighlightScreenshot = await this.takeScreenshot(
 			this.genFileName("leftClick", "highlight"));
 
 		try {
-			await this.highlight(selector);
 			await this.page.click(selector);
-			await this.deHighlight();
-			step.afterScreenshot = await this.takeScreenshot(
-				this.genFileName("leftClick", "after"));
+			if(afterClickScreenshot) {
+				step.afterScreenshot = await this.takeScreenshot(
+					this.genFileName("leftClick", "after"));
+			}
+			await this.deHighlight(selector, true);
 		} catch(e) {
+			await this.deHighlight(selector, true);
 			this.handleError(e, "leftClick", `on '${selector}'`)
 		}
 		this.printMsg(`${this.conf.color ? greenTick : tick}You left click ${selector}`);
@@ -375,28 +381,33 @@ export class E2E2D {
 		return fn.slice(prefix.length);
 	}
 
-	async highlight(sel: string) {
-		await this.page.evaluate(
-`if(typeof Domlight === "function") {
-	Domlight(document.querySelector('${sel}'));
-}`);
+	async highlight(sel: string, shouldHighlight: boolean): Promise<any> {
+		return shouldHighlight && sel !== null && sel !== undefined && sel != ""
+			?  await this.page.evaluate(`Domlight(document.querySelector('${sel}'));`)
+			: null;
 	}
 
-	async deHighlight() {
-		await this.page.evaluate(
-`if(typeof Domlight === "function") {
-	Domlight.hideAll();
-}`);
+	async deHighlight(sel: string, shouldHighlight: boolean): Promise<any> {
+		return shouldHighlight && sel !== null && sel !== undefined && sel != ""
+			? await this.page.evaluate(`Domlight.hideAll();`)
+			: null;
 	}
 
-	get should() {
+	async should(funs: ShouldFun[]) {
 		++this.cnt;
-		return new Should(this);
+		return this.shouldImpl(new Should(this), funs);
 	}
 
-	shouldNoScreenShot() {
+	async shouldNoScreenShot(funs: ShouldFun[]) {
 		++this.cnt;
-		return new Should(this, false);
+		return this.shouldImpl(new Should(this, false), funs);
+	}
+
+	private async shouldImpl(sh: Should, funs: ShouldFun[]): Promise<Should> {
+		for(let fun of funs) {
+			sh = await fun(sh);
+		}
+		return sh;
 	}
 }
 
