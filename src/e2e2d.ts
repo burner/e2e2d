@@ -81,7 +81,7 @@ export function see(selector: string = "", docName: string = ""): any {
 		sh.selector = selector;
 		sh.msg.push("see");
 		sh.msg.push(docName !== "" ? docName : selector);
-		sh.el = await sh.U.page.$(selector);
+		sh.el = await sh.U.page.waitForSelector(selector);
 		return sh;
 	}
 }
@@ -338,6 +338,34 @@ export class E2E2D {
 			this.handleError(e, "insert", `'${selector}' with '${value}'`);
 		}
 		this.printMsg(`${this.conf.color ? greenTick : tick}You insert '${value}' into ${selector}`);
+		this.recording.addStep(step);
+		++this.cnt;
+	}
+
+	async leftClickNav(selector: string, doc: string = ""
+			, afterClickScreenshot: boolean = true)
+	{
+		const step = new Step("leftClick", selector, doc);
+		step.beforeScreenshot = await this.takeScreenshot(
+			this.genFileName("leftClick", "before"));
+		await this.highlight(selector, true);
+		step.afterHighlightScreenshot = await this.takeScreenshot(
+			this.genFileName("leftClick", "highlight"));
+		await this.deHighlight(selector, true);
+
+		try {
+			await Promise.all(
+				[ this.page.waitForNavigation({waitUntil: 'networkidle', timeout: 5000})
+				, this.page.click(selector) ]
+			);
+			if(afterClickScreenshot) {
+				step.afterScreenshot = await this.takeScreenshot(
+					this.genFileName("leftClick", "after"));
+			}
+		} catch(e) {
+			this.handleError(e, "leftClick", `on '${selector}'`)
+		}
+		this.printMsg(`${this.conf.color ? greenTick : tick}You left click ${selector}`);
 		this.recording.addStep(step);
 		++this.cnt;
 	}
