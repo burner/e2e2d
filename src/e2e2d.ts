@@ -351,6 +351,7 @@ export class E2E2D {
 		await this.highlight(selector, true);
 		step.afterHighlightScreenshot = await this.takeScreenshot(
 			this.genFileName("leftClick", "highlight"));
+		await this.deHighlight(selector, true);
 
 		try {
 			await this.page.click(selector);
@@ -358,9 +359,7 @@ export class E2E2D {
 				step.afterScreenshot = await this.takeScreenshot(
 					this.genFileName("leftClick", "after"));
 			}
-			await this.deHighlight(selector, true);
 		} catch(e) {
-			await this.deHighlight(selector, true);
 			this.handleError(e, "leftClick", `on '${selector}'`)
 		}
 		this.printMsg(`${this.conf.color ? greenTick : tick}You left click ${selector}`);
