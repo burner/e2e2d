@@ -485,6 +485,7 @@ export async function InOrderTo(name: string, desc: string
 
 	for(const f of chain) {
 		try {
+			chained.startRecording();
 			if(f.constructor.name == "AsyncFunction") {
 				chained = await f(chained);
 			} else {
@@ -493,7 +494,6 @@ export async function InOrderTo(name: string, desc: string
 					chained.stopRecording();
 				}
 				chained = await f.fun(chained);
-				chained.startRecording();
 			}
 		} catch(e) {
 			if(data.conf.silentUnlessError && data.deferedOutput.length > 0) {
