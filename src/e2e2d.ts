@@ -493,9 +493,7 @@ export async function InOrderTo(name: string, desc: string
 					chained.stopRecording();
 				}
 				chained = await f.fun(chained);
-				if(!f.recordSteps) {
-					chained.startRecording();
-				}
+				chained.startRecording();
 			}
 		} catch(e) {
 			if(data.conf.silentUnlessError && data.deferedOutput.length > 0) {
