@@ -275,7 +275,7 @@ export class E2E2D {
 	}
 
 	startRecording() {
-		this.recording.recodingIsOn = false;
+		this.recording.recodingIsOn = true;
 	}
 
 	printMsg(msg: string) {
