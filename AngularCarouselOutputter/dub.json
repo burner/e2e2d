@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"Robert \"burner\" Schadek"
+	],
+	"copyright": "Copyright © 2021, Robert \"burner\" Schadek",
+	"dependencies": {
+		"argsd": "~>1.0.0"
+	},
+	"description": "Turns e2e2d into angular carousel output. This is also the example, as nobody knows how your doc is to look.",
+	"license": "MIT",
+	"name": "angularcarouseloutputter"
+}
