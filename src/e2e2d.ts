@@ -156,7 +156,7 @@ export class Should {
 	selector: string = "";
 
 	constructor(public U: E2E2D, public shouldTakeScreenshot: boolean = true) {
-		this.msg = ["You"];
+		this.msg = ["You", "should"];
 	}
 
 	async saveStepError(additionalData: any = null) {
