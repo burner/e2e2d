@@ -90,6 +90,7 @@ export function equals(toCmpAgainst: any, transform: (input: any) => any = ident
 	return async function(sh: Should): Promise<Should> {
 		const v = await transform(await sh.el);
 
+		sh.msg.push("equals");
 		sh.msg.push(`'${toCmpAgainst}'`);
 		if(v !== toCmpAgainst) {
 			await sh.saveStepError(
@@ -111,6 +112,7 @@ export function equal(toCmpAgainst: any, transform: (input: any) => any = identi
 	return async function(sh: Should): Promise<Should> {
 		const v = await transform(await sh.el);
 
+		sh.msg.push("equal");
 		sh.msg.push(`'${toCmpAgainst}'`);
 		if(v !== toCmpAgainst) {
 			await sh.saveStepError(
@@ -134,6 +136,7 @@ export async function to(sh: Should): Promise<Should> {
 }
 
 export async function exist(sh: Should): Promise<Should> {
+	sh.msg.push("exist");
 	const v = Promise.resolve(sh.el) == sh.el
 		? await sh.el
 		: sh.el;

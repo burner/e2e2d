@@ -1,6 +1,6 @@
 {
 	"name": "e2e2d",
-	"version": "3.0.5",
+	"version": "3.0.6",
 	"description": "",
 	"main": "dist/e2e2d.js",
 	"types": "dist/e2e2d.d.ts",
@@ -10,7 +10,8 @@
 	"scripts": {
 		"build": "npm-run-all build:clean build:compile",
 		"build:clean": "rm -rf dist",
-		"build:compile": "tsc"
+		"build:compile": "tsc",
+		"prepublish": "npm run build"
 	},
 	"keywords": [
 		"playwright",
