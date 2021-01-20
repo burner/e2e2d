@@ -348,12 +348,12 @@ export class E2E2D {
 	async leftClickNav(selector: string, doc: string = ""
 			, afterClickScreenshot: boolean = true)
 	{
-		const step = new Step("leftClick", selector, doc);
+		const step = new Step("leftClickNav", selector, doc);
 		step.beforeScreenshot = await this.takeScreenshot(
-			this.genFileName("leftClick", "before"));
+			this.genFileName("leftClickNav", "before"));
 		await this.highlight(selector, true);
 		step.afterHighlightScreenshot = await this.takeScreenshot(
-			this.genFileName("leftClick", "highlight"));
+			this.genFileName("leftClickNav", "highlight"));
 		await this.deHighlight(selector, true);
 
 		try {
@@ -363,10 +363,10 @@ export class E2E2D {
 			);
 			if(afterClickScreenshot) {
 				step.afterScreenshot = await this.takeScreenshot(
-					this.genFileName("leftClick", "after"));
+					this.genFileName("leftClickNav", "after"));
 			}
 		} catch(e) {
-			this.handleError(e, "leftClick", `on '${selector}'`)
+			this.handleError(e, "leftClickNav", `on '${selector}'`)
 		}
 		this.printMsg(`${this.conf.color ? greenTick : tick}You left click ${selector}`);
 		this.recording.addStep(step);
@@ -478,6 +478,16 @@ export function preCondition(name: string, fun: any
 	return new PreCondition(name, fun, recordSteps);
 }
 
+async function writeE2E2D(e2e2d: E2E2D) {
+	if(e2e2d.conf.generateDoc) {
+		await fs.writeFile(outputFolderName(e2e2d.conf.outputFolder, e2e2d.name)
+			+ "e2e2d.json"
+			, JSON.stringify({name: e2e2d.name, steps: e2e2d.recording.steps}, null
+				, 2)
+			+ "\n");
+	}
+}
+
 export async function InOrderTo(name: string, desc: string
 		, ...chain: any[]): Promise<any>
 {
@@ -518,17 +528,11 @@ export async function InOrderTo(name: string, desc: string
 			} else {
 				console.log("Error Rest: " + e);
 			}
-			if(data.conf.generateDoc) {
-				await fs.writeFile(outputFolderName(chained.conf.outputFolder, name)
-					+ "e2e2d.json", JSON.stringify(chained.recording, null, 2) + "\n");
-			}
+			await writeE2E2D(chained);
 			process.exit(1);
 		}
 	}
 	data.browser.close();
-	if(data.conf.generateDoc) {
-		await fs.writeFile(outputFolderName(chained.conf.outputFolder, name)
-			+ "e2e2d.json", JSON.stringify(chained.recording, null, 2) + "\n");
-	}
+	await writeE2E2D(chained);
 	return data;
 }
