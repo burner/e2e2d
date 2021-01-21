@@ -78,7 +78,9 @@ E2E2D fromFileName(string fn) {
 }
 
 void writeDocs(Out)(ref Out o, E2E2D[] docs) {
-	formattedWrite(o, "mat-accordion\n");
+
+	formattedWrite(o, `mat-accordion(style="min-width: 85%%; width: 85%%; margin: 0px")
+`);
 	foreach(it; docs) {
 		formattedWrite(o, "\tmat-expansion-panel\n\t\tmat-expansion-panel-header\n"
 			~ "\t\t\tmat-panel-title %s\n\t\tmat-dialog-content\n"
