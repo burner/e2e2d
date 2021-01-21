@@ -13,7 +13,9 @@ struct Options {
 	@Arg()
 	string inputFolder = "e2e2documentation";
 	@Arg()
-	string outputFolder;
+	string assetsFolder;
+	@Arg()
+	string ngCarouselFileName;
 }
 
 private Options __theOptions;
@@ -86,7 +88,7 @@ void writeDocs(Out)(ref Out o, E2E2D[] docs) {
 }
 
 void writeDoc(Out)(ref Out o, E2E2D doc) {
-	formattedWrite(o,
+	/*formattedWrite(o,
 `			mat-carousel(
 				timings="250ms ease-in"
 				"[autoplay]"="true"
@@ -102,7 +104,7 @@ void writeDoc(Out)(ref Out o, E2E2D doc) {
 				"[useMouseWheel]"="false"
 				orientation="ltr"
 			)
-`);
+`);*/
 	foreach(step; doc.steps) {
 		if(step.action == "followStepsIn") {
 			writeStepFollowIn(o, doc, step);
@@ -123,56 +125,52 @@ string makeRelativeToAssests(string s) {
 
 void writeStepLeftClick(Out)(ref Out o, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-carousel-slide(
-					"#matCarouselSlide"
-	  				overlayColor="#00000040"
-					"[image]"="%s/%s"
-	  				"[hideOverlay]"="false"
-				)
-					h3 You left click on '%s'
-`, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, s.selector);
+`				mat-card
+					mat-card-header
+						mat-card-title You left click on '%s'
+						mat-card-subtitle Before left click
+					img("mat-card-image" src="%s/%s")
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot);
 
 	formattedWrite(o,
-`				mat-carousel-slide(
-					"#matCarouselSlide"
-	  				overlayColor="#00000040"
-					"[image]"="%s/%s"
-	  				"[hideOverlay]"="false"
-				)
-					h3 You left click on '%s'
-`, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot, s.selector);
+`				mat-card
+					mat-card-header
+						mat-card-title You left click on '%s'
+						mat-card-subtitle With highlight
+					img("mat-card-image" src="%s/%s")
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot);
 
 	if(!s.afterScreenshot.empty) {
 		formattedWrite(o,
-`				mat-carousel-slide(
-					"#matCarouselSlide"
-	  				overlayColor="#00000040"
-					"[image]"="%s/%s"
-	  				"[hideOverlay]"="false"
-				)
-					h3 You left click on '%s'
-`, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot, s.selector);
+`				mat-card
+					mat-card-header
+						mat-card-title You left click on '%s'
+						mat-card-subtitle After click
+					img("mat-card-image" src="%s/%s")
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot);
 	}
 }
 
 void writeStepFollowIn(Out)(ref Out o, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-carousel-slide(
-					"#matCarouselSlide"
-	  				overlayColor="#00000040"
-	  				"[hideOverlay]"="false"
-				)
-					h3 You follow the steps in '%s'
+`				mat-card
+					mat-card-header
+						mat-card-title You follow the steps in '%s'
+						mat-card-subtitle Before left click
 `, s.selector);
 }
 
 void copyFolder(string fromFolder, string intoFolder) {
-	import std.path : buildPath;
 	foreach(it; dirEntries(fromFolder, SpanMode.depth, false)) {
-		const dn = dirName(it);
-		const fn = baseName(it);
-		mkdirRecurse(buildPath(intoFolder, dn));
-		copy(it, buildPath(intoFolder, dn, fn));
+		const newName = it.name[fromFolder.length + 1 .. $];
+		if(isDir(it.name)) {
+			mkdirRecurse(buildPath(intoFolder, newName));
+		} else {
+			string oPath = buildPath(intoFolder, newName);
+			string dName = dirName(oPath);
+			mkdirRecurse(dName);
+			copy(it.name, oPath);
+		}
 	}
 }
 
@@ -193,8 +191,19 @@ int main(string[] args) {
 	}
 
 	auto parsed = files.map!(it => parseJV(it)).array;
-	auto ltw = stdout.lockingTextWriter();
-	writeDocs(ltw, parsed);
+	if(options().ngCarouselFileName.empty) {
+		auto ltw = stdout.lockingTextWriter();
+		writeDocs(ltw, parsed);
+	} else {
+		auto f = File(options().ngCarouselFileName, "w");
+		auto ltw = f.lockingTextWriter();
+		writeDocs(ltw, parsed);
+	}
+
+	if(options().assetsFolder) {
+		string oFolder = buildPath(options().assetsFolder, "e2e2documentation");
+		copyFolder(options().inputFolder, oFolder);
+	}
 
 	return 0;
 }
