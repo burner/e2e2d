@@ -88,30 +88,16 @@ void writeDocs(Out)(ref Out o, E2E2D[] docs) {
 }
 
 void writeDoc(Out)(ref Out o, E2E2D doc) {
-	/*formattedWrite(o,
-`			mat-carousel(
-				timings="250ms ease-in"
-				"[autoplay]"="true"
-				interval="5000"
-				color="accent"
-				maxWidth="auto"
-				proportion="25"
-				slides="5"
-				"[loop]"="true"
-				"[hideArrows]"="false"
-				"[hideIndicators]"="false"
-				"[useKeyboard]"="true"
-				"[useMouseWheel]"="false"
-				orientation="ltr"
-			)
-`);*/
-	foreach(step; doc.steps) {
+	formattedWrite(o,
+`			div("fxLayout"="row wrap" "fxLayoutGap"="16px grid" "fxLayoutAlign"="space-between space-between")
+`);
+	foreach(idx, step; doc.steps) {
 		if(step.action == "followStepsIn") {
-			writeStepFollowIn(o, doc, step);
+			writeStepFollowIn(o, idx, doc, step);
 		} else if(step.action == "leftClick") {
-			writeStepLeftClick(o, doc, step);
+			writeStepLeftClick(o, idx, doc, step);
 		} else if(step.action == "leftClickNav") {
-			writeStepLeftClick(o, doc, step);
+			writeStepLeftClick(o, idx, doc, step);
 		}
 	}
 }
@@ -123,41 +109,56 @@ string makeRelativeToAssests(string s) {
 		: "/assets/" ~ s;
 }
 
-void writeStepLeftClick(Out)(ref Out o, E2E2D e2e2d, Step s) {
+void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
 `				mat-card
 					mat-card-header
-						mat-card-title You left click on '%s'
+						mat-card-title You left click on '%1$s'
 						mat-card-subtitle Before left click
-					img("mat-card-image" src="%s/%s")
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot);
+					img("mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p Step %4$s.0
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
 
 	formattedWrite(o,
 `				mat-card
 					mat-card-header
-						mat-card-title You left click on '%s'
+						mat-card-title You left click on '%1$s'
 						mat-card-subtitle With highlight
-					img("mat-card-image" src="%s/%s")
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot);
+					img("mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p Step %4$s.1
+`, s.selector, makeRelativeToAssests(e2e2d.folderName)
+	, s.afterHighlightScreenshot, idx);
 
 	if(!s.afterScreenshot.empty) {
 		formattedWrite(o,
 `				mat-card
 					mat-card-header
-						mat-card-title You left click on '%s'
+						mat-card-title You left click on '%1$s'
 						mat-card-subtitle After click
-					img("mat-card-image" src="%s/%s")
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot);
+					img("mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p Step %4$s.2
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot, idx);
 	}
 }
 
-void writeStepFollowIn(Out)(ref Out o, E2E2D e2e2d, Step s) {
+void writeStepFollowIn(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
 `				mat-card
 					mat-card-header
-						mat-card-title You follow the steps in '%s'
-						mat-card-subtitle Before left click
-`, s.selector);
+						mat-card-title You follow the steps in tutorial
+						mat-card-subtitle '%s'
+					mat-card-content
+						p Step %s
+`, s.selector, idx);
 }
 
 void copyFolder(string fromFolder, string intoFolder) {
