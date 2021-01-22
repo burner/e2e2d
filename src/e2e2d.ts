@@ -415,7 +415,7 @@ export class E2E2D {
 	}
 
 	async highlight(sel: string, shouldHighlight: boolean): Promise<any> {
-		return shouldHighlight && sel !== ""
+		return shouldHighlight && sel != ""
 			? await this.page.evaluate(`Domlight(document.querySelector('${sel}'));`)
 			: null;
 	}

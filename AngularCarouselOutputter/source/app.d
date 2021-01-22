@@ -141,8 +141,7 @@ void writeStepShould(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.0
 						mat-card-subtitle Compare
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p %1$s
 `, s.doc, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
@@ -153,8 +152,7 @@ void writeStepShould(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.1
 						mat-card-subtitle Compare highlighted
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p %1$s
 `, s.doc, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot
@@ -168,8 +166,7 @@ void writeStepInsert(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.0
 						mat-card-subtitle You insert data
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p You insert data into '%1$s'
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
@@ -180,8 +177,7 @@ void writeStepInsert(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.1
 						mat-card-subtitle You insert data
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p You insert data into '%1$s'
 						p The field to insert into is highlighted
@@ -195,8 +191,7 @@ void writeStepInsert(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.1
 						mat-card-subtitle You insert data
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p You insert data into '%1$s'
 						p The field to insert into is highlighted
@@ -212,8 +207,7 @@ void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.0
 						mat-card-subtitle Left click
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p %5$s %1$s.0
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
@@ -225,8 +219,7 @@ void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.1
 						mat-card-subtitle Left click highlighted
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p %5$s %1$s.0
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
@@ -239,8 +232,7 @@ void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						mat-card-title Step %4$s.2
 						mat-card-subtitle Left click after click
 					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')"
-					)
+						"(click)"="openImage('%2$s/%3$s')")
 					mat-card-content
 						p %5$s %1$s.0
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
