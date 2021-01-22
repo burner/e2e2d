@@ -1,4 +1,5 @@
 import std.algorithm.iteration : map;
+import std.algorithm.searching : endsWith;
 import std.range : tee;
 import std.array;
 import std.stdio;
@@ -91,7 +92,9 @@ void writeDocs(Out)(ref Out o, E2E2D[] docs) {
 
 void writeDoc(Out)(ref Out o, E2E2D doc) {
 	formattedWrite(o,
-`			div("fxLayout"="row wrap" "fxLayoutGap"="16px grid" "fxLayoutAlign"="space-between space-between")
+`			div("fxLayout"="row wrap" "fxLayoutGap"="64 grid"
+				"fxLayoutAlign"="space-between space-between"
+			)
 `);
 	foreach(idx, step; doc.steps) {
 		if(step.action == "followStepsIn") {
@@ -100,6 +103,12 @@ void writeDoc(Out)(ref Out o, E2E2D doc) {
 			writeStepLeftClick(o, idx, doc, step);
 		} else if(step.action == "leftClickNav") {
 			writeStepLeftClick(o, idx, doc, step);
+		} else if(step.action == "insert") {
+			writeStepInsert(o, idx, doc, step);
+		} else if(step.action == "should") {
+			writeStepShould(o, idx, doc, step);
+		} else if(step.action == "navTo") {
+			writeStepNavTo(o, idx, doc, step);
 		}
 	}
 }
@@ -111,56 +120,145 @@ string makeRelativeToAssests(string s) {
 		: "/assets/" ~ s;
 }
 
-void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
+void writeStepNavTo(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card
+`				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title You left click on '%1$s'
-						mat-card-subtitle Before left click
-					img("mat-card-image" src="%2$s/%3$s"
+						mat-card-title Step %2$s.0
+						mat-card-subtitle You navigate to
+					mat-card-content
+						p.
+							You type the url %1$s into your browser's navigation
+							bar
+						p %3$s
+`, s.selector, idx, s.doc);
+}
+
+void writeStepShould(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
+	formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.0
+						mat-card-subtitle Compare
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
 						"(click)"="openImage('%2$s/%3$s')"
 					)
 					mat-card-content
-						p Step %4$s.0
+						p %1$s
+`, s.doc, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
+
+	formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.1
+						mat-card-subtitle Compare highlighted
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p %1$s
+`, s.doc, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot
+		, idx);
+}
+
+void writeStepInsert(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
+	formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.0
+						mat-card-subtitle You insert data
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p You insert data into '%1$s'
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
 
 	formattedWrite(o,
-`				mat-card
+`				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title You left click on '%1$s'
-						mat-card-subtitle With highlight
-					img("mat-card-image" src="%2$s/%3$s"
+						mat-card-title Step %4$s.1
+						mat-card-subtitle You insert data
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
 						"(click)"="openImage('%2$s/%3$s')"
 					)
 					mat-card-content
-						p Step %4$s.1
+						p You insert data into '%1$s'
+						p The field to insert into is highlighted
 `, s.selector, makeRelativeToAssests(e2e2d.folderName)
 	, s.afterHighlightScreenshot, idx);
 
 	if(!s.afterScreenshot.empty) {
 		formattedWrite(o,
-`				mat-card
+`				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title You left click on '%1$s'
-						mat-card-subtitle After click
-					img("mat-card-image" src="%2$s/%3$s"
+						mat-card-title Step %4$s.1
+						mat-card-subtitle You insert data
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
 						"(click)"="openImage('%2$s/%3$s')"
 					)
 					mat-card-content
-						p Step %4$s.2
+						p You insert data into '%1$s'
+						p The field to insert into is highlighted
+						p The way it should look after you inserted the data
 `, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot, idx);
+	}
+}
+
+void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
+	formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.0
+						mat-card-subtitle Left click
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p %5$s %1$s.0
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
+, s.doc);
+
+	formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.1
+						mat-card-subtitle Left click highlighted
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p %5$s %1$s.0
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
+, s.doc);
+
+	if(!s.afterScreenshot.empty) {
+		formattedWrite(o,
+`				mat-card("fxFlex"="20%%")
+					mat-card-header
+						mat-card-title Step %4$s.2
+						mat-card-subtitle Left click after click
+					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
+						"(click)"="openImage('%2$s/%3$s')"
+					)
+					mat-card-content
+						p %5$s %1$s.0
+`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
+, s.doc);
 	}
 }
 
 void writeStepFollowIn(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card
+`				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title You follow the steps in tutorial
-						mat-card-subtitle '%s'
+						mat-card-title Step %2$s.0
+						mat-card-subtitle You left click
 					mat-card-content
-						p Step %s
-`, s.selector, idx);
+						p You follow the steps in tutorial
+						p %1$s
+						p %3$s
+`, s.selector, idx, s.doc);
 }
 
 void copyFolder(string fromFolder, string intoFolder) {

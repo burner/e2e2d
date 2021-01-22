@@ -301,7 +301,10 @@ export class E2E2D {
 	}
 
 	genFileName(action: string, part: string): string {
-		return `${this.genPrefix()}${this.cnt}_${action}_${part}.png`;
+		const re = /'/g;
+		let ret = `${this.genPrefix()}${this.cnt}_${action}_${part}.png`;
+		ret = ret.replace(re, '_');
+		return ret;
 	}
 
 	async comment(doc: string) {
@@ -311,7 +314,7 @@ export class E2E2D {
 	}
 
 	async navTo(url: string, doc: string = "") {
-		const step = new Step("navTo", "", doc);
+		const step = new Step("navTo", url, doc);
 		step.beforeScreenshot = await this.takeScreenshot(
 			this.genFileName("navTo", "before"));
 		try {
@@ -412,8 +415,8 @@ export class E2E2D {
 	}
 
 	async highlight(sel: string, shouldHighlight: boolean): Promise<any> {
-		return shouldHighlight && sel !== null && sel !== undefined && sel != ""
-			?  await this.page.evaluate(`Domlight(document.querySelector('${sel}'));`)
+		return shouldHighlight && sel !== ""
+			? await this.page.evaluate(`Domlight(document.querySelector('${sel}'));`)
 			: null;
 	}
 
