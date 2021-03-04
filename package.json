@@ -1,7 +1,7 @@
 {
 	"name": "e2e2d",
-	"version": "3.0.8",
-	"description": "",
+	"version": "3.2.1",
+	"description": "Turning end to end tests into user facing documentation",
 	"main": "dist/e2e2d.js",
 	"types": "dist/e2e2d.d.ts",
 	"directories": {
@@ -26,7 +26,7 @@
 	"dependencies": {
 		"@ngbmodule/material-carousel": "^0.7.1",
 		"lazyargs": "^2.0.0",
-		"playwright": "^1.7.1"
+		"playwright": "1.9.1"
 	},
 	"devDependencies": {
 		"npm-run-all": "^4.1.5",

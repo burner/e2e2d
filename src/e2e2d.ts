@@ -1,10 +1,16 @@
-import {Browser, chromium, Page, ElementHandle} from "playwright";
+import {Browser, chromium, Page, ElementHandle, BrowserContext} from "playwright";
 import * as path from "path"
 import { promises as fs } from "fs";
 import { Elem, OptionCallback, OptionDoc, OptionShort, parseCMD, buildElem, enforce } from "lazyargs";
 
 export async function identity(input: any): Promise<any> {
 	return input;
+}
+
+export function inputValue(page: Page): any {
+	return async function(el: any): Promise<any> {
+		return await page.evaluate(element => element["value"], el);
+	};
 }
 
 export async function innerText(el: ElementHandle): Promise<any> {
@@ -266,7 +272,8 @@ export class E2E2D {
 	deferedOutput: string[] = [];
 	constructor(public name: string, public desc: string
 			, public conf: E2E2DConfig
-			, public browser: Browser, public page: Page
+			, public browser: Browser, public ctx: BrowserContext
+			, public page: Page
 			, public recording: Recording = new Recording()
 	)
 	{
@@ -459,8 +466,9 @@ async function impl(name: string, desc: string): Promise<E2E2D> {
 		, devtools: conf.pw.devTools
 		});
 
+	const ctx = await browser.newContext({acceptDownloads: true});
 	const page = await browser.newPage();
-	let ret = new E2E2D(name, desc, conf, browser, page);
+	let ret = new E2E2D(name, desc, conf, browser, ctx, page);
 	if(conf.configDataFilename) {
 		ret.conf.configFileData = JSON.parse(
 			await fs.readFile(conf.configDataFilename, "utf8")
