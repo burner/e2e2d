@@ -7,10 +7,10 @@ export async function identity(input: any): Promise<any> {
 	return input;
 }
 
-export function inputValue(page: Page): any {
-	return async function(el: any): Promise<any> {
-		return await page.evaluate(element => element["value"], el);
-	};
+export async function inputValue(el: ElementHandle): Promise<any> {
+	return el !== null && el !== undefined
+		? await el.inputValue()
+		: "";
 }
 
 export async function innerText(el: ElementHandle): Promise<any> {
@@ -92,7 +92,9 @@ export function see(selector: string = "", docName: string = ""): any {
 	}
 }
 
-export function equals(toCmpAgainst: any, transform: (input: any) => any = identity): any {
+export function equals(toCmpAgainst: any
+		, transform: (input: any) => any = identity): any
+{
 	return async function(sh: Should): Promise<Should> {
 		const v = await transform(await sh.el);
 
@@ -114,7 +116,9 @@ export function equals(toCmpAgainst: any, transform: (input: any) => any = ident
 	}
 }
 
-export function equal(toCmpAgainst: any, transform: (input: any) => any = identity): any {
+export function equal(toCmpAgainst: any
+		, transform: (input: any) => any = identity): any
+{
 	return async function(sh: Should): Promise<Should> {
 		const v = await transform(await sh.el);
 
@@ -270,13 +274,13 @@ export type ConfigFileData = { [key: string]: any };
 export class E2E2D {
 	cnt: number = 0;
 	deferedOutput: string[] = [];
+	latestZIndex: string;
 	constructor(public name: string, public desc: string
 			, public conf: E2E2DConfig
 			, public browser: Browser, public ctx: BrowserContext
 			, public page: Page
 			, public recording: Recording = new Recording()
-	)
-	{
+	) {
 
 	}
 
@@ -368,7 +372,10 @@ export class E2E2D {
 
 		try {
 			await Promise.all(
-				[ this.page.waitForNavigation({waitUntil: 'networkidle', timeout: 5000})
+				[ this.page.waitForNavigation(
+					{ waitUntil: 'networkidle'
+					, timeout: 5000
+					})
 				, this.page.click(selector) ]
 			);
 			if(afterClickScreenshot) {
@@ -421,16 +428,25 @@ export class E2E2D {
 		return fn.slice(prefix.length);
 	}
 
-	async highlight(sel: string, shouldHighlight: boolean): Promise<any> {
-		return shouldHighlight && sel != ""
-			? await this.page.evaluate(`Domlight(document.querySelector('${sel}'));`)
-			: null;
+	// This is the css magic to highlight a selection
+	// box-shadow: 0 0 0 99999px rgba(0, 0, 0, .8);
+	async highlight(sel: string, shouldHighlight: boolean) {
+		if(shouldHighlight && sel != "") {
+			let handle = this.page.locator(sel);
+			await handle.waitFor();
+			this.latestZIndex = await handle.evaluate(node => node.style.zIndex);
+			await handle.evaluate(node => node.style.zIndex = <any>99999);
+			await handle.evaluate(node => node.style.boxShadow = "0 0 0 99999px rgba(0, 0, 0, .8)");
+		}
 	}
 
-	async deHighlight(sel: string, shouldHighlight: boolean): Promise<any> {
-		return shouldHighlight && sel !== null && sel !== undefined && sel != ""
-			? await this.page.evaluate(`Domlight.hideAll();`)
-			: null;
+	async deHighlight(sel: string, shouldHighlight: boolean) {
+		if(shouldHighlight && sel != "") {
+			let handle = this.page.locator(sel);
+			await handle.waitFor();
+			await handle.evaluate(node => node.style.boxShadow = "none");
+			await handle.evaluate(node => node.style.zIndex = this.latestZIndex);
+		}
 	}
 
 	async should(funs: ShouldFun[]) {
@@ -509,13 +525,13 @@ export async function InOrderTo(name: string, desc: string
 
 	for(const f of chain) {
 		try {
-			chained.startRecording();
+			//chained.startRecording();
 			if(f.constructor.name == "AsyncFunction") {
 				chained = await f(chained);
 			} else {
 				chained.followStepsIn(f.name);
 				if(!f.recordSteps) {
-					chained.stopRecording();
+					//chained.stopRecording();
 				}
 				chained = await f.fun(chained);
 			}

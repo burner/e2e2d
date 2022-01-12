@@ -1,6 +1,6 @@
 {
 	"name": "e2e2d",
-	"version": "3.2.1",
+	"version": "3.3.0",
 	"description": "Turning end to end tests into user facing documentation",
 	"main": "dist/e2e2d.js",
 	"types": "dist/e2e2d.d.ts",
@@ -25,11 +25,11 @@
 	"license": "MIT",
 	"dependencies": {
 		"@ngbmodule/material-carousel": "^0.7.1",
-		"lazyargs": "^2.0.0",
-		"playwright": "1.9.1"
+		"lazyargs": "3.0.0",
+		"playwright": "1.17.1"
 	},
 	"devDependencies": {
 		"npm-run-all": "^4.1.5",
-		"typescript": "^3.9.7"
+		"typescript": "4.4.4"
 	}
 }
