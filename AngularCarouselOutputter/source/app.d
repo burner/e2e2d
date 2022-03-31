@@ -120,9 +120,21 @@ string makeRelativeToAssests(string s) {
 		: "/assets/" ~ s;
 }
 
+string imgHelper(string path, string fn) {
+	string r = "\n\t\t\t\t\timg(\"mat-card-image\" src=\"%1$s/%2$s\""
+		~ "\t\t\t\t\t\t\"(click)\"=\"openImage('%1$s/%2$s')\")";
+	return !fn.endsWith(".png")
+		? ""
+		: format(r, path, fn);
+}
+
+string escapeSelector(string sel) {
+	return sel.replace("#", "&num;");
+}
+
 void writeStepNavTo(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
 						mat-card-title Step %2$s.0
 						mat-card-subtitle You navigate to
@@ -130,113 +142,100 @@ void writeStepNavTo(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						p.
 							You type the url %1$s into your browser's navigation
 							bar
-						p %3$s
-`, s.selector, idx, s.doc);
+						p '%3$s'
+`, s.selector.escapeSelector(), idx, s.doc);
 }
 
 void writeStepShould(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.0
-						mat-card-subtitle Compare
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.0
+						mat-card-subtitle Compare%3$s
 					mat-card-content
-						p %1$s
-`, s.doc, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
+						p '%1$s'
+`, s.doc, idx, imgHelper(makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot)
+	);
 
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.1
-						mat-card-subtitle Compare highlighted
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.1
+						mat-card-subtitle Compare highlighted%3$s
 					mat-card-content
-						p %1$s
-`, s.doc, makeRelativeToAssests(e2e2d.folderName), s.afterHighlightScreenshot
-		, idx);
+						p '%1$s'
+`, s.doc, idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.afterHighlightScreenshot));
 }
 
 void writeStepInsert(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.0
-						mat-card-subtitle You insert data
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.0
+						mat-card-subtitle You insert data%3$s
 					mat-card-content
 						p You insert data into '%1$s'
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx);
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.beforeScreenshot));
 
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.1
-						mat-card-subtitle You insert data
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.1
+						mat-card-subtitle You insert data%3$s
 					mat-card-content
 						p You insert data into '%1$s'
 						p The field to insert into is highlighted
-`, s.selector, makeRelativeToAssests(e2e2d.folderName)
-	, s.afterHighlightScreenshot, idx);
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName)
+	, s.afterHighlightScreenshot));
 
 	if(!s.afterScreenshot.empty) {
 		formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.1
-						mat-card-subtitle You insert data
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.1
+						mat-card-subtitle You insert data%3$s
 					mat-card-content
 						p You insert data into '%1$s'
 						p The field to insert into is highlighted
 						p The way it should look after you inserted the data
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.afterScreenshot, idx);
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.afterScreenshot));
 	}
 }
 
 void writeStepLeftClick(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 	formattedWrite(o,
-`				mat-card("fxFlex"="20%%")
+`				mat-card
 					mat-card-header
-						mat-card-title Step %4$s.0
-						mat-card-subtitle Left click
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.0
+						mat-card-subtitle Left click%3$s
 					mat-card-content
-						p %5$s %1$s.0
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
-, s.doc);
+						p %4$s %1$s.0
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.beforeScreenshot), s.doc);
 
 	formattedWrite(o,
 `				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title Step %4$s.1
-						mat-card-subtitle Left click highlighted
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.1
+						mat-card-subtitle Left click highlighted%3$s
 					mat-card-content
-						p %5$s %1$s.0
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
-, s.doc);
+						p %4$s '%1$s.1'
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.beforeScreenshot), s.doc);
 
 	if(!s.afterScreenshot.empty) {
 		formattedWrite(o,
 `				mat-card("fxFlex"="20%%")
 					mat-card-header
-						mat-card-title Step %4$s.2
-						mat-card-subtitle Left click after click
-					img("*ngIf"="'%3$s'.endsWith('.png')" "mat-card-image" src="%2$s/%3$s"
-						"(click)"="openImage('%2$s/%3$s')")
+						mat-card-title Step %2$s.2
+						mat-card-subtitle Left click after click%3$s
 					mat-card-content
-						p %5$s %1$s.0
-`, s.selector, makeRelativeToAssests(e2e2d.folderName), s.beforeScreenshot, idx
-, s.doc);
+						p %4$s '%1$s'.2
+`, s.selector.escapeSelector(), idx, imgHelper(makeRelativeToAssests(e2e2d.folderName),
+	s.beforeScreenshot), s.doc);
 	}
 }
 
@@ -250,7 +249,7 @@ void writeStepFollowIn(Out)(ref Out o, size_t idx, E2E2D e2e2d, Step s) {
 						p You follow the steps in tutorial
 						p %1$s
 						p %3$s
-`, s.selector, idx, s.doc);
+`, s.selector.escapeSelector(), idx, s.doc);
 }
 
 void copyFolder(string fromFolder, string intoFolder) {
